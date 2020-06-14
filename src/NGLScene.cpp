@@ -52,6 +52,7 @@ void NGLScene::initializeGL()
          glEnable(GL_MULTISAMPLE);
 
          m_player.reset( new player(ngl::Vec2(0,11),"models/viper.obj", 10));
+         //Viper Obj file https://www.turbosquid.com/FullPreview/Index.cfm/ID/612994//
 
          m_playerTimer =  startTimer(50);
          m_invaderTimer =  startTimer(2000);

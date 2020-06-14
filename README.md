@@ -1,7 +1,7 @@
 __BILLIE_DARTNELL_s5005667__
 
 __Introduction__
-This game looks at creating a simple topdown 2D shooter game, similar to space invaders. To make this game, I used qt creator, the NGL library and OpenGL. This report details my research and implementation of this game and what I could do in the future to improve it.
+This game looks at creating a simple topdown 2D shooter game, similar to space invaders. To make this game, I used qt creator, the NGL library and OpenGL. This report details my research and implementation of this game and what I could do in the future to improve it. My final game works by the player pressing space to fire and the left or right arrow keys to move. The game is won when all the invaders are hit or lost when either the invaders hit the bottom or hit the player.
 
 __Research__
 ![Space Invaders](/Images/spaceinvaders.png)
@@ -16,23 +16,74 @@ __Implementation__
 
 To start my game, I first needed to set up a camera. To do this I used a struct with two ngl::Mat4 elements, view and project,  I could then, in NGLScene, declare the view and project which could then be passed into my draw functions. 
 
-Within my draw functions I took the project and view and used it to render the elements by setting the transformation and then multiplying it by the product of the view and project. and using that for the uniform shader. For the invaders I used the default troll from the NGL library and looped the x,y values to create three rows and incremented by 2 so that the invaders wouldn’t touch the gap created added difficulty when trying to hit the invaders, with the player I used an obj file from turbo squid (Viper Obj) which I used a VAO to load it in. For the bullets I chose to use OpenGL’s in built GLPoint, this meant I could control the size of the bullet and as it’s stored in a dynamic array like the invaders it also has the potential to allow more than one bullet on the screen at any one time.
+Within my draw functions I took the project and view and used it to render the elements by setting the transformation and then multiplying it by the product of the view and project, and using that for the uniform shader. For the invaders I used the default troll from the NGL library and looped the x,y values to create three rows and incremented by 2 so that the invaders wouldn’t touch, the gap created added difficulty when trying to hit the invaders.
+
+            for(int j = -6; j <-3;j++)
+                {
+                    for (int  i= -8; i <10;i+=2)
+                        {
+                            pos.set(i,j);
+                            m_invaderArray.push_back(invader(pos));
+                        }
+                }
+
+With the player I used an obj file from turbo squid (Viper Obj) which I used a VAO to load it in. For the bullets I chose to use OpenGL’s in built GLPoint, this meant I could control the size of the bullet and as it’s stored in a dynamic array like the invaders it also has the potential to allow more than one bullet on the screen at any one time.
 
 ![Viper model](/Images/viper.png)
 
 An important aspect of the game is the timer. The bullet needed to move faster than the invaders to make it possible to win, this meant I needed two timers, by using two timer ID's I could separate the two and have them run at different speeds.
 
-My next step was to add controls to the player, for this I used QT Creator's key press event and a switch statement to see which key was pressed. When the left or right arrow key was pressed it  added to a integer variable which was passed into the player move function which would move the spaceship accordingly, iIalso added an if statement here to check whether the player was going out of bounds and stopped them if so. Within the switch statement it also checked to see if the spacebar was pressed and if pressed would reset the bullets position and I used a bool to see whether or not to draw the bullet, this is changed in the space bar switch case if it needs to be drawn or not.
-To move the invaders, I looped over the array and had them go just down with the timer at first however I wanted them to move side to side before going down like in the orginal game. Although I didn’t get the movement I wanted, I managed to get the invaders to move to the side before going down diagonally, to do this I checked to see if the invaders x position was odd or even and moving them accordingly. This still made the game more challenging than if I had left at them going straight down.
+My next step was to add controls to the player, for this I used QT Creator's key press event and a switch statement to see which key was pressed. When the left or right arrow key was pressed it  added to a integer variable which was passed into the player move function which would move the spaceship accordingly, I also added an if statement here to check whether the player was going out of bounds and stopped them if so. Within the switch statement I also checked to see if the spacebar was pressed and if so would reset the bullets position. I used a bool to see whether or not to draw the bullet, this is changed to true in the spacebar switch case, thus drawing the bullet.
+
+To move the invaders, I looped over the array and had them go just down with the timer at first however I wanted them to move side to side before going down like in the original game. Although I didn’t get the movement I wanted, I managed to get the invaders to move to the side before going down diagonally, to do this I checked to see if the invaders x position was odd or even and moving them accordingly. This still made the game more challenging than if I had left at them going straight down.
+
+                            bool down =false;
+                            if(int(m_position.m_x) % 2 == 0)
+                                {
+                                    m_position.m_x+=1;
+                                    down =true;
+                                }
+                                else
+                                {
+                                    m_position.m_x-=1;
+                                    down = false;
+                                }
+
+                            if(down)
+                                {
+                                     m_position.m_y+=1;
+                                }
+
+
 
 In order for the player to win or lose I needed to add collision detection. Since it was a top down game I only needed to use the x and y coordinates and I decided to use integers for the positions to make it simpler for the collision detection. To check if a bullet had hit an invader, I passed the bullets position into the invader collision function which then, using if statements, checked to see if the bullet’s x and y equalled the specific invaders position and if so, returned true so that it was known to erase that invader from the array and to stop drawing the bullet. I used the same function to check if the invaders had hit the player, i just passed the player’s coordinates in instead. 
 
-Finally I needed to add a win or lose aspect to the game, to do this I check to see if the player has killed all the invaders by checking the size of the invader array, if it equals 0 the player has won and the game displays “You Won!”, I also added a score to the game, whereby one alien equals one point. If the Invaders either hit the player or the bottom of the screen, they stop moving and “Game Over” is displayed. To stop the game automatically starting when you run it I added in a bool that turns to true when the space bar is pressed, which starts the invaders movement
+
+            if(m_animate == true)
+                {
+                    if(m_player->m_positionbullet.m_y > -10)
+                        {
+                            for(auto i = m_invaderArray.begin(); i != m_invaderArray.end();)
+                                {
+                                    if(i->collision(m_player->m_positionbullet.m_x,m_player->m_positionbullet.m_y))
+                                        {
+                                            score += 1;
+                                            m_animate = false;
+                                            i = m_invaderArray.erase(i);
+                                        }
+                                    else{i++;}
+                                }
+                        }
+                    m_player->update();
+                }
+
+
+Finally I needed to add a win or lose aspect to the game, to do this I check to see if the player has killed all the invaders by checking the size of the invader array, if it equals 0 the player has won and the game displays “You Won!”, I also added a score to the game, whereby one alien equals one point. If the Invaders either hit the player or the bottom of the screen, they stop moving and “Game Over” is displayed. To stop the game automatically starting when you run it I added in a bool that turns to true when the space bar is pressed, which starts the invaders movement.
 
 ![Start Screen](/Images/spaceinvadersmine.png)
 
 __Conclusion__
-In conclusion, I am happy with the game I have created, the collision detection works well and even though the players are simple it looks good. To improve this game I would add protective bunkers and get the invaders to fire back, I could also add more levels for when the player kills all the invaders.
+In conclusion, I am happy with the game I have created, the collision detection works well and even though the elements are simple it looks good. To improve this game I would add protective bunkers and get the invaders to fire back, I could also add more levels for when the player kills all the invaders.
 
 
 __References__
